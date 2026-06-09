@@ -1,153 +1,153 @@
+Abaixo está a versão adaptada para **PowerShell no Windows**, mantendo apenas os comandos que possuem equivalente direto ou funcionalidade semelhante.
 
----
-
-> 💡 **Dica Inicial:** Acesse **cocalc.com** → crie uma conta gratuita → clique em **New Project** → abra um **Terminal** (menu *Files* > *New* > *Terminal*). Você terá um Linux Ubuntu completo diretamente no seu navegador para praticar os comandos abaixo.
-
----
-
-## 1. Explorando a interface de rede `[Introdutório]`
-
-Primeiro, vamos ver quais interfaces de rede existem na máquina — é como checar as "portas" disponíveis no sistema.
+# 1. Explorando a interface de rede [Introdutório]
 
 ### Listar interfaces de rede
 
-```bash
-ip addr show
-
+```powershell
+Get-NetAdapter
 ```
 
-Você verá algo como `lo` (*loopback* = o computador falando consigo mesmo) e `eth0` (interface de rede real). Cada uma delas tem um endereço IP associado.
+### Ver os endereços IP
 
-### Ver os IPs de forma resumida
-
-```bash
-hostname -I
-
+```powershell
+Get-NetIPAddress
 ```
 
-### Ver a tabela de rotas (como os pacotes chegam à internet)
+Ou de forma resumida:
 
-```bash
-ip route show
-
+```powershell
+ipconfig
 ```
 
-> 📌 **Nota:** O endereço IP que aparece é o do servidor do CoCalc. Você está mexendo em um Linux real hospedado na nuvem!
+### Ver a tabela de rotas
+
+```powershell
+Get-NetRoute
+```
+
+Ou:
+
+```powershell
+route print
+```
 
 ---
 
-## 2. Testando conectividade com ping e traceroute `[Introdutório]`
+# 2. Testando conectividade com ping e traceroute [Introdutório]
 
-O `ping` envia um "oi" para um servidor e mede quanto tempo ele demora para responder. Já o `traceroute` mostra o caminho exato que o pacote percorre pela internet.
+### Ping básico
 
-### Ping básico (pressione Ctrl+C para parar)
-
-```bash
-ping -c 4 google.com
-
+```powershell
+ping google.com
 ```
 
-O parâmetro `-c 4` limita o teste a apenas 4 pacotes. Observe o tempo em **ms** (milissegundos) — quanto menor ele for, mais rápida é a resposta.
+Ou limitando a 4 pacotes:
+
+```powershell
+ping -n 4 google.com
+```
 
 ### Traçar o caminho até o servidor
 
-```bash
-traceroute google.com
-
+```powershell
+tracert google.com
 ```
 
-Cada linha do resultado representa um "salto" (*hop*) — ou seja, um roteador pelo qual o seu pacote passou. Os caracteres `* * *` indicam roteadores que bloqueiam esse tipo de rastreamento por segurança.
+### Resolver um domínio para IP
 
-### Verificar se um domínio resolve para um IP
-
-```bash
+```powershell
 nslookup google.com
-
 ```
 
 ---
 
-## 3. Fazendo requisições HTTP com curl `[Prático]`
+# 3. Fazendo requisições HTTP [Prático]
 
-O `curl` simula exatamente o que um navegador de internet faz: ele pede uma página a um servidor e recebe a resposta estruturada. É fundamental para entender como a web funciona nos bastidores.
+### Baixar o HTML de uma página
 
-### Buscar o HTML de uma página
-
-```bash
+```powershell
 curl https://example.com
-
 ```
 
-### Ver apenas os cabeçalhos HTTP (metadados da resposta)
+ou
 
-```bash
+```powershell
+Invoke-WebRequest https://example.com
+```
+
+### Ver apenas os cabeçalhos HTTP
+
+```powershell
 curl -I https://example.com
-
 ```
 
-Aqui você verá o **status HTTP** (ex: `200 OK`, `301 Moved Permanently`, `404 Not Found`), o servidor web utilizado, a data e o tipo do conteúdo.
+ou
 
-### Consumir uma API pública e ver o retorno em JSON
+```powershell
+(Invoke-WebRequest https://example.com).Headers
+```
 
-```bash
+### Consumir uma API pública
+
+```powershell
 curl https://api.github.com/users/torvalds
-
 ```
 
-### Consumir a mesma API, mas com o JSON formatado
+### Consumir uma API e formatar o JSON
 
-```bash
-sudo apt-get install -y jq && curl https://api.github.com/users/torvalds | jq .
-
+```powershell
+Invoke-RestMethod https://api.github.com/users/torvalds | ConvertTo-Json -Depth 10
 ```
 
-> 💡 **Dica:** Com a ferramenta `jq` instalada, o JSON fica colorido e indentado, tornando a leitura muito mais humana e amigável!
+O PowerShell já possui suporte nativo a JSON, dispensando o uso do `jq`.
 
 ---
 
-## 4. Criando um servidor web com Python `[Prático]`
+# 4. Criando um servidor web com Python [Prático]
 
-Agora você vai criar um servidor HTTP do zero usando Python puro — sem precisar instalar nenhuma biblioteca externa.
+### Criar pasta e arquivo HTML
 
-### Criar uma pasta e um arquivo HTML básico
+```powershell
+mkdir "$HOME\meusite"
 
-```bash
-mkdir ~/meusite && echo "<h1>Meu servidor Python!</h1>" > ~/meusite/index.html
-
+"<h1>Meu servidor Python!</h1>" | Out-File "$HOME\meusite\index.html"
 ```
 
-### Entrar na pasta e subir o servidor na porta 8080
+### Entrar na pasta e iniciar o servidor
 
-```bash
-cd ~/meusite && python3 -m http.server 8080
+```powershell
+cd "$HOME\meusite"
 
+python -m http.server 8080
 ```
 
-O terminal vai "travar" — isso é perfeitamente normal! Significa que o servidor está ativo e escutando. **Abra uma segunda aba de terminal no CoCalc** para continuar executando os comandos abaixo.
+ou
 
-### Na segunda aba, teste o seu próprio servidor com o curl
+```powershell
+python3 -m http.server 8080
+```
 
-```bash
+### Testar o servidor local
+
+```powershell
 curl http://localhost:8080
-
 ```
 
-Você receberá o HTML de volta! Toda vez que alguém acessa o seu servidor, o log de acesso aparece detalhado lá na primeira aba.
+### Parar o servidor
 
-> 🛑 **Para parar o servidor:** Volte à primeira aba de terminal e pressione **Ctrl + C**.
+```text
+Ctrl + C
+```
 
 ---
 
-## 5. Sockets em Python: cliente e servidor TCP `[Avançado]`
+# 5. Sockets em Python: cliente e servidor TCP [Avançado]
 
-Aqui vamos entender o nível mais baixo da rede: como dois programas se comunicam diretamente usando sockets TCP — a base de praticamente toda a comunicação na internet.
+### Criar o arquivo servidor.py
 
-### Criar o arquivo do servidor (`servidor.py`)
-
-Copie e cole o bloco abaixo no terminal para criar o script:
-
-```bash
-cat > ~/servidor.py << 'EOF'
+```powershell
+@'
 import socket
 
 HOST = 'localhost'
@@ -166,16 +166,13 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 break
             print(f"Recebido: {data.decode()}")
             conn.sendall(b"Mensagem recebida!")
-EOF
-
+'@ | Out-File "$HOME\servidor.py"
 ```
 
-### Criar o arquivo do cliente (`cliente.py`)
+### Criar o arquivo cliente.py
 
-Copie e cole este bloco para gerar o script do cliente:
-
-```bash
-cat > ~/cliente.py << 'EOF'
+```powershell
+@'
 import socket
 
 HOST = 'localhost'
@@ -186,27 +183,39 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.sendall(b"Ola, servidor!")
     resposta = s.recv(1024)
     print(f"Resposta do servidor: {resposta.decode()}")
-EOF
-
+'@ | Out-File "$HOME\cliente.py"
 ```
 
-### Execução do laboratório
+### Executar o laboratório
 
-Abra dois terminais simultâneos no CoCalc e execute um comando em cada um:
+**Terminal 1**
 
-* **No Terminal 1:** Inicie o servidor
-```bash
-python3 ~/servidor.py
-
+```powershell
+python "$HOME\servidor.py"
 ```
 
+**Terminal 2**
 
-* **No Terminal 2:** Execute o cliente para disparar a mensagem
-```bash
-python3 ~/cliente.py
-
+```powershell
+python "$HOME\cliente.py"
 ```
 
+---
 
+## Equivalência rápida Linux → PowerShell
 
-Você verá a mensagem chegar instantaneamente no servidor e a confirmação voltar para o cliente. É exatamente isso que acontece quando você acessa qualquer site no seu dia a dia, só que envelopado em centenas de outras camadas!
+| Linux           | PowerShell                    |
+| --------------- | ----------------------------- |
+| `ip addr show`  | `Get-NetIPAddress`            |
+| `hostname -I`   | `ipconfig`                    |
+| `ip route show` | `Get-NetRoute`                |
+| `ping -c 4`     | `ping -n 4`                   |
+| `traceroute`    | `tracert`                     |
+| `nslookup`      | `nslookup`                    |
+| `curl`          | `curl` ou `Invoke-WebRequest` |
+| `mkdir`         | `mkdir`                       |
+| `cd`            | `cd`                          |
+| `python3`       | `python`                      |
+| `Ctrl+C`        | `Ctrl+C`                      |
+
+Essa adaptação funciona em **Windows 10, Windows 11 e Windows Server** utilizando PowerShell 5.1 ou PowerShell 7+.
